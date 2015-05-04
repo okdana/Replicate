@@ -1,0 +1,45 @@
+[
+	{
+		"id":       "tools",
+		"caption":  "Tools",
+		"children": [
+			{
+				"id":      "tools_replicate_file",
+				"caption": "Replicate File",
+				"command": "replicate_file"
+			},
+			{
+				"id":      "tools_replicate_directory",
+				"caption": "Replicate Directory",
+				"command": "replicate_directory"
+			}
+		]
+	},
+
+	{
+		"caption":  "Preferences",
+		"mnemonic": "n",
+		"id":       "preferences",
+		"children": [ {
+			"caption":  "Package Settings",
+			"mnemonic": "P",
+			"id":       "package-settings",
+			"children": [ {
+				"caption":  "Replicate",
+				"children": [
+					{
+						"command": "open_file",
+						"args":    {"file": "${packages}/Replicate/Replicate.sublime-settings"},
+						"caption": "Settings - Default"
+					},
+					{
+						"command": "open_file",
+						"args":    {"file": "${packages}/User/Replicate.sublime-settings"},
+						"caption": "Settings - User"
+					}
+				]
+			} ]
+		} ]
+	}
+]
+

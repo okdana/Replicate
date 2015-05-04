@@ -1,0 +1,46 @@
+{
+	// Pass verbose option to command-line utilities? (Enable for debugging.)
+	"debug": false,
+
+	// Replicate file automatically on save?
+	"replicate_on_save": true,
+
+	// Create intervening directories on the remote end?
+	"mkdir": false,
+
+	// Default method when not specified in replication mapping
+	"method": "scp",
+
+	// Default host when not specified in scp replication mapping.
+	// Ignored in non-scp replication mappings.
+	"host": null,
+
+	// Default port when not specified in scp replication mapping.
+	// Ignored in non-scp replication mappings.
+	"port": 22,
+
+	// Default user name when not specified in scp replication mapping. The name
+	// of the user who owns the Sublime Text process will be used if this value
+	// is not set here or in the replication mapping.
+	// Ignored in non-scp replication mappings.
+	"user_name": null,
+
+	// Default identity file when not specified in scp replication mapping.
+	// Ignored in non-scp replication mappings.
+	"identity_file": null,
+
+	// Default meta-data option when not specified in replication mapping. When
+	// set, file-system meta-data such as permissions and access times will be
+	// carried over to the remote end.
+	"preserve_metadata": false,
+
+	// Replication mappings
+	"replicate": [
+		{
+			"method": "cp",
+			"local":  "/my/local/test/path",
+			"remote": "/my/remote/test/path"
+		}
+	]
+}
+
