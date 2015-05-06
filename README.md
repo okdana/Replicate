@@ -16,7 +16,7 @@ Compared to SimpleSync, Replicate also offers improved configuration handling, b
 I have not yet set Replicate up for Package Control. Until i do, you can install it manually à la:
 
 ```
-cd ~/Library/Application\ Support/Sublime Text\ 3/Packages
+cd ~/Library/Application\ Support/Sublime\ Text\ 3/Packages
 git clone git@github.com:okdana/Replicate.git
 ```
 
