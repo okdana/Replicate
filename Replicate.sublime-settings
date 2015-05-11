@@ -8,7 +8,7 @@
 	// Create intervening directories on the remote end?
 	"mkdir": false,
 
-	// Default method when not specified in replication mapping
+	// Default method when not specified in replication mapping.
 	"method": "scp",
 
 	// Default host when not specified in scp replication mapping.
@@ -38,8 +38,27 @@
 	"replicate": [
 		{
 			"method": "cp",
-			"local":  "/my/local/test/path",
-			"remote": "/my/remote/test/path"
+
+			// `local` paths are matched against using Python's fnmatch module;
+			// the syntax is very similar to a shell glob, except that `*`
+			// doesn't (necessarily) stop at directory boundaries — it acts like
+			// the regular-expression pattern `.*`. Examples:
+			//
+			// /foo:
+			// Will match all paths under /foo, but only when manually
+			// replicating entire directories.
+			//
+			// /foo/*:
+			// Will match all paths beginning with /foo/ (/foo/my.py,
+			// /foo/bar/baz/my.py, &c.).
+			//
+			// */foo/*.py:
+			// Will match all files ending in *.php in any directory called foo
+			// (/foo/my.py, /baz/bar/foo/my.py, /baz/foo/bar/*.py, &c.),
+			//
+			// Most `local` paths should probably end in * or *.ext.
+			"local":  "*/my/local/path/*",
+			"remote": "/my/remote/path"
 		}
 	]
 }

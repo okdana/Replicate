@@ -17,6 +17,7 @@ from __future__ import print_function, unicode_literals
 
 import subprocess
 import threading
+import fnmatch
 import pipes
 import os
 
@@ -101,7 +102,8 @@ class Replicator(threading.Thread):
 		if settings.get('debug'):
 			Replicate().puts_console('Executing shell command:', cmd)
 
-		p = subprocess.Popen(cmd,
+		p = subprocess.Popen(
+			cmd,
 			shell=True,
 			stdout=subprocess.PIPE,
 			stderr=subprocess.STDOUT
@@ -114,7 +116,8 @@ class Replicator(threading.Thread):
 			if callback is not None:
 				line = line.decode('utf-8').strip()
 
-				if line: callback(line)
+				if line:
+					callback(line)
 
 			if ret is not None:
 				break
@@ -168,14 +171,17 @@ class ScpReplicator(Replicator):
 			Replicate().puts_both('Missing host')
 			return
 
-		user_host = self.mapping['user_name'] + '@' + self.mapping['host']
+		user_host = '%s@%s' % (self.mapping['user_name'], self.mapping['host'])
 
 		# If we're sending a directory, peel back the last path component from
 		# the destination so that we don't get nested directories
 		if os.path.isdir(self.local_file):
-			destination = user_host + ':' + os.path.dirname(os.path.normpath(self.remote_file))
+			destination = '%s:%s' % (
+				user_host,
+				os.path.dirname(os.path.normpath(self.remote_file))
+			)
 		else:
-			destination = user_host + ':' + self.remote_file
+			destination = '%s:%s' % (user_host, self.remote_file)
 
 		Replicate().puts_console(self.pretty_path, '->', destination)
 		Replicate().puts_status( self.pretty_path, '->', self.mapping['host'])
@@ -220,14 +226,19 @@ class Replicate(sublime_plugin.EventListener):
 
 	def get_pretty_path(self, path):
 		"""
-		Normalises a path according to the following rules:
+		Normalises a path for display according to the following rules:
 
-		1. If the path points to a file, use the format '<file base name>'.
+		1. The last two path components of the path are pulled out.
 
-		2. If the path points to a directory, or the path ends with a '/', use
-		   the format '<directory base name>/*'.
+		2. If the path contains more than two components, the output is
+		   preceded by '.../'; otherwise, it is preceded by '/'.
 
-		3. If all else fails, use the format '<file base name>'.
+		3. If the path ends with '/' or is a directory on the file system, the
+		   output is succeeded by '/*'.
+
+		Examples:
+		/foo/bar/baz.py -> .../bar/baz.py
+		/foo/bar/baz/   -> .../bar/baz/*
 
 		@param string path
 		  The absolute file/directory path to normalise.
@@ -235,14 +246,13 @@ class Replicate(sublime_plugin.EventListener):
 		@return string
 		  Returns a string per the above rules.
 		"""
-		path = os.path.normpath(path)
+		norm_path = os.path.normpath(path).split('/')
 
-		if os.path.isfile(path):
-			return os.path.basename(path)
-		elif os.path.isdir(path) or path.endswith('/'):
-			return os.path.basename(path) + '/*'
-		else:
-			return os.path.basename(path)
+		return '%s%s%s' % (
+			'.../' if len(norm_path) > 2 else '/',
+			'/'.join(norm_path[-2:]),
+			'/*' if path.endswith('/') or os.path.isdir(path) else ''
+		)
 
 	def puts_console(self, *args):
 		"""
@@ -266,7 +276,7 @@ class Replicate(sublime_plugin.EventListener):
 
 		@return None
 		"""
-		sublime.status_message('Replicate: ' + ' '.join(args))
+		sublime.status_message('Replicate: %s' % ' '.join(args))
 
 	def puts_both(self, *args):
 		"""
@@ -326,13 +336,13 @@ class Replicate(sublime_plugin.EventListener):
 
 		for idx, mapping in enumerate(mappings):
 			if not mapping['local']:
-				self.puts_console('Mapping ' + str(idx + 1) + ': Missing local')
+				self.puts_console('Mapping %d: Missing local' % (idx + 1))
 				continue
 			if not mapping['remote']:
-				self.puts_console('Mapping ' + str(idx + 1) + ': Missing remote')
+				self.puts_console('Mapping %d: Missing remote' % (idx + 1))
 				continue
 
-			if local_file.startswith(mapping['local']):
+			if fnmatch.fnmatch(local_file, mapping['local']):
 				ret += [self.normalise_mapping(mapping)]
 
 		return ret
@@ -366,31 +376,27 @@ class Replicate(sublime_plugin.EventListener):
 			# If this is a file, get the parent directory
 			if os.path.isfile(local_file):
 				local_file = os.path.dirname(local_file)
-			# Because the local path is compared to the 'local' mapping property
-			# using a simple string prefix check, we want directories to always
-			# end with '/'; otherwise, (e.g.) the local property '/my/path/'
-			# won't match the directory '/my/path'
-			if not local_file.endswith('/'):
-				local_file += '/'
 
 		mappings = self.get_mappings(local_file)
 
 		if len(mappings) < 1:
 			if settings.get('debug'):
 				self.puts_console(
-					self.get_pretty_path(local_file) +
-					': No mappings found'
+					'%s: No mappings found' % self.get_pretty_path(local_file)
 				)
 			return
 
 		for idx, mapping in enumerate(mappings):
+			if settings.get('debug') and mapping['local']:
+				self.puts_console('Got mapping:', mapping['local'])
+
 			if (mapping['method'] == 'scp'):
 				ScpReplicator(local_file, mapping).start()
 			elif (mapping['method'] == 'cp'):
 				CpReplicator(local_file, mapping).start()
 			else:
 				self.puts_console(
-					'Mapping ' + str(idx + 1) + ': Unrecognised method:',
+					'Mapping %d: Unrecognised method' % (idx + 1),
 					mapping['method']
 				)
 				continue
