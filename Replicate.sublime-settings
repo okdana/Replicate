@@ -8,7 +8,7 @@
 	// Create intervening directories on the remote end?
 	"mkdir": false,
 
-	// Default method when not specified in replication mapping
+	// Default method when not specified in replication mapping.
 	"method": "scp",
 
 	// Default host when not specified in scp replication mapping.
@@ -39,8 +39,8 @@
 		{
 			"method": "cp",
 			"local":  "/my/local/test/path",
-			"remote": "/my/remote/test/path"
-		}
-	]
+			"remote": "/my/remote/test/path",
+		},
+	],
 }
 
