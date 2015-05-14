@@ -15,10 +15,11 @@ Replicate: An almost-simple cp/scp synchronisation plug-in for Sublime Text 3.
 
 from __future__ import print_function, unicode_literals
 
+import os
+import pipes
+import fnmatch
 import subprocess
 import threading
-import pipes
-import os
 
 import sublime
 import sublime_plugin
@@ -41,6 +42,7 @@ defaults = {
 	'user_name':         os.getlogin(),
 	'identity_file':     None,
 	'preserve_metadata': False,
+	'exclude':           [],
 	'replicate':         [],
 }
 
@@ -308,12 +310,51 @@ class Replicate(sublime_plugin.EventListener):
 			'user_name':         settings.get('user_name'),
 			'identity_file':     settings.get('identity_file'),
 			'preserve_metadata': settings.get('preserve_metadata'),
+			'exclude':           settings.get('exclude'),
+			'local':             None,
+			'remote':            None,
 		}
 
 		normalised_mapping = default_mapping.copy()
 		normalised_mapping.update(mapping)
 
 		return normalised_mapping
+
+	def file_is_excluded(self, local_file, patterns):
+		"""
+		Returns whether the specified file is excluded by any of the specified
+		exclude patterns.
+
+		@param string local_file
+		  The path to the local file (the file to be replicated).
+
+		@param list patterns
+		  The exclude patterns to match against.
+
+		@return bool
+		  Returns True if file is excluded, False if not.
+		"""
+		exclude = False
+
+		if not local_file or not patterns:
+			return False
+
+		for pattern in patterns:
+			if not pattern.startswith('*') and not pattern.startswith('/'):
+				pattern = '*/' + pattern
+			if fnmatch.fnmatch(local_file, pattern):
+				exclude = True
+				break
+			if not pattern.endswith('*'):
+				pattern += '*' if pattern.endswith('/') else '/*'
+			if fnmatch.fnmatch(local_file, pattern):
+				exclude = True
+				break
+
+		if exclude and settings.get('debug'):
+			self.puts_console('Excluded (%s): %s' % (pattern, local_file))
+
+		return exclude
 
 	def get_mappings(self, local_file):
 		"""
@@ -338,6 +379,9 @@ class Replicate(sublime_plugin.EventListener):
 				continue
 
 			if local_file.startswith(mapping['local']):
+				if self.file_is_excluded(local_file, mapping['exclude']):
+					continue
+
 				ret += [self.normalise_mapping(mapping)]
 
 		return ret

@@ -8,7 +8,7 @@
 	// Create intervening directories on the remote end?
 	"mkdir": false,
 
-	// Default method when not specified in replication mapping
+	// Default method when not specified in replication mapping.
 	"method": "scp",
 
 	// Default host when not specified in scp replication mapping.
@@ -34,13 +34,25 @@
 	// carried over to the remote end.
 	"preserve_metadata": false,
 
+	// Default exclude option when not specified in replication mapping. When
+	// set, paths @TODO 
+	"exclude": [],
+
 	// Replication mappings
 	"replicate": [
 		{
-			"method": "cp",
-			"local":  "/my/local/test/path",
-			"remote": "/my/remote/test/path"
-		}
-	]
+			"method":  "cp",
+			"local":   "/my/local/test/path",
+			"remote":  "/my/remote/test/path",
+			"exclude": [
+				// Exclude any path with a segment beginning with '.git'
+				".git*",
+				// Exclude any path with a segment ending with '.key'
+				"*.secret",
+				// Exclude any path with a segment containing 'foo'
+				"*foo*",
+			],
+		},
+	],
 }
 
